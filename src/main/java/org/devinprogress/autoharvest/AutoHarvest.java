@@ -32,7 +32,7 @@ import java.util.*;
  * This Mod is published under GPLv3
  * Use it *AT YOUR OWN RISK*
  *                   RecursiveG
- *              2014 Sept. 29th
+ *                   2014 Sept. 29th
  *
  *
  *
@@ -53,16 +53,17 @@ import java.util.*;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@Mod(modid="autoharvest", name="Auto Harvest Mod", version="0.1-dev")
+@Mod(modid="autoharvest", name="Auto Harvest Mod", version="1.0")
 public class AutoHarvest {
     private boolean enabled=false;
     private boolean harvestTick=true;
     private KeyBinding toggleKey=new KeyBinding("Toggle Enabled/Disabled", Keyboard.KEY_H,"Auto Harvest Mod");
     private static int harvestRange=1;
+    private Minecraft mc=null;
+
     private static final Set<Integer> grassBlockIds =new HashSet<Integer>(Arrays.asList(new Integer[]{
             6,31,32,37,38,39,40,175
     }));
-    private Minecraft mc=null;
     private static final Set<Item> plantableItems=new HashSet<Item>(){{
         add(Items.wheat_seeds);
         add(Items.carrot);
@@ -134,8 +135,8 @@ public class AutoHarvest {
         for(int deltaY=-1;deltaY<=1;++deltaY)
             for(int deltaX=-2;deltaX<=2;++deltaX)
                 for(int deltaZ=-2;deltaZ<=2;++deltaZ)
-                    if(canClearGrass(w,X + deltaX, Y+deltaY, Z + deltaZ)){
-                        mc.playerController.onPlayerDamageBlock(X + deltaX, Y + deltaY, Z + deltaZ, 1);
+                    if(grassBlockIds.contains(Block.getIdFromBlock(w.getBlock(X+deltaX,Y+deltaY,Z+deltaZ)))){
+                        mc.playerController.onPlayerDamageBlock(X+deltaX,Y+deltaY,Z+deltaZ,1);
                         return;
                     }
     }
@@ -148,7 +149,7 @@ public class AutoHarvest {
         for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
             for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
                 if(canHarvest(w,p,X+deltaX,Y,Z+deltaZ)) {
-                    mc.playerController.onPlayerDamageBlock(X + deltaX, Y, Z + deltaZ, 1);
+                    mc.playerController.onPlayerDamageBlock(X+deltaX,Y,Z+deltaZ,1);
                     return;
                 }
             }
@@ -161,35 +162,25 @@ public class AutoHarvest {
         int Z=(int)Math.floor(p.posZ);
         for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
             for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
-                if(canPlantOn(w, p,X + deltaX, Y, Z + deltaZ)) {
+                if(canPlantOn(w,p,X+deltaX,Y,Z+deltaZ)) {
                     ItemStack seed=mc.thePlayer.inventory.getCurrentItem();
-                    mc.playerController.onPlayerRightClick(p, w, seed, X + deltaX, Y, Z + deltaZ, 1,
-                            Vec3.createVectorHelper(X + deltaX + 0.5, Y + 1, Z + deltaZ + 0.5));
+                    mc.playerController.onPlayerRightClick(p,w,seed,X+deltaX,Y,Z+deltaZ,1,
+                            Vec3.createVectorHelper(X+deltaX+0.5,Y+1,Z+deltaZ+0.5));
                     return;
                 }
             }
     }
 
-    private boolean canClearGrass(World w,int X,int Y,int Z){
-        return grassBlockIds.contains(Block.getIdFromBlock(w.getBlock(X, Y, Z)));
-    }
-
     private boolean canHarvest(World w,EntityPlayer p,int X,int Y,int Z){
         Class<?> c=w.getBlock(X, Y, Z).getClass();
-        return harvestMap.containsKey(c)&&harvestMap.get(c)==p.inventory.getCurrentItem().getItem()&&CropGrown(w,X,Y,Z,c);
-    }
-
-    private boolean CropGrown(World w,int X,int Y,int Z,Class<?> cropClass){
-        int meta=w.getBlockMetadata(X,Y,Z);
-        return cropMatureData.get(cropClass)==meta;
+        return harvestMap.containsKey(c) && cropMatureData.get(c)==w.getBlockMetadata(X,Y,Z) &&
+               harvestMap.get(c) == p.inventory.getCurrentItem().getItem();
     }
 
     private boolean canPlantOn(World w,EntityPlayer p,int X,int Y,int Z){
         Item i=p.inventory.getCurrentItem().getItem();
-        boolean haveSpace=w.getBlock(X,Y+1,Z)instanceof BlockAir;
-        boolean isFarm=w.getBlock(X,Y,Z) instanceof BlockFarmland;
-        boolean CropOnFarm=plantableItems.contains(i);
-        boolean nether_wart=(w.getBlock(X,Y,Z) instanceof BlockSoulSand)&&(i==Items.nether_wart);
-        return haveSpace&&(nether_wart||(isFarm&&CropOnFarm));
+        return w.getBlock(X,Y+1,Z)instanceof BlockAir &&
+               (w.getBlock(X,Y,Z) instanceof BlockFarmland && plantableItems.contains(i) ||
+                w.getBlock(X,Y,Z) instanceof BlockSoulSand && i==Items.nether_wart);
     }
 }
