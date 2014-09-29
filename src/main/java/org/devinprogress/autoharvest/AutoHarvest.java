@@ -10,9 +10,7 @@ import cpw.mods.fml.common.gameevent.InputEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -27,7 +25,32 @@ import org.lwjgl.input.Keyboard;
 import java.util.*;
 
 /**
- * Created by recursiveg on 14-9-28.
+ * Auto Harvest Mod
+ * This Mod can help you harvest crops automatically.
+ * It can also help you clear the ground.
+ * Works for both SSP & SMP
+ * This Mod is published under GPLv3
+ * Use it *AT YOUR OWN RISK*
+ *                   RecursiveG
+ *              2014 Sept. 29th
+ *
+ *
+ *
+ * Auto Harvest Mod
+ * Copyright (C) 2014  RecursiveG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 @Mod(modid="autoharvest", name="Auto Harvest Mod", version="0.1-dev")
@@ -53,7 +76,7 @@ public class AutoHarvest {
         put(BlockPotato.class,Items.potato);
         put(BlockNetherWart.class,Items.nether_wart);
     }};
-    private static final Map<Class<?>,Integer> cropMatureData=new HashMap<Class<?>, Integer>(){{
+    static final Map<Class<?>,Integer> cropMatureData=new HashMap<Class<?>, Integer>(){{
         put(BlockCrops.class,7);
         put(BlockCarrot.class,7);
         put(BlockPotato.class,7);
@@ -62,6 +85,7 @@ public class AutoHarvest {
 
 
     @Mod.EventHandler
+    @SuppressWarnings("unused")
     public void load(FMLInitializationEvent event) {
         ClientRegistry.registerKeyBinding(toggleKey);
         MinecraftForge.EVENT_BUS.register(this);
@@ -71,7 +95,9 @@ public class AutoHarvest {
     private void sendPlayerPrivateMsg(String str){
         FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText(str));
     }
+
     @SubscribeEvent
+    @SuppressWarnings("unused")
     public void onToggle(InputEvent.KeyInputEvent e){
         if(toggleKey.isPressed()){
             if(!enabled){
@@ -109,7 +135,7 @@ public class AutoHarvest {
             for(int deltaX=-2;deltaX<=2;++deltaX)
                 for(int deltaZ=-2;deltaZ<=2;++deltaZ)
                     if(canClearGrass(w,X + deltaX, Y+deltaY, Z + deltaZ)){
-                        mc.playerController.onPlayerDamageBlock(X + deltaX, Y+deltaY, Z + deltaZ, 1);
+                        mc.playerController.onPlayerDamageBlock(X + deltaX, Y + deltaY, Z + deltaZ, 1);
                         return;
                     }
     }
@@ -137,8 +163,8 @@ public class AutoHarvest {
             for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
                 if(canPlantOn(w, p,X + deltaX, Y, Z + deltaZ)) {
                     ItemStack seed=mc.thePlayer.inventory.getCurrentItem();
-                    mc.playerController.onPlayerRightClick(p,w,seed,X + deltaX, Y, Z + deltaZ,1,
-                                Vec3.createVectorHelper(X + deltaX+0.5, Y+1, Z + deltaZ+0.5));
+                    mc.playerController.onPlayerRightClick(p, w, seed, X + deltaX, Y, Z + deltaZ, 1,
+                            Vec3.createVectorHelper(X + deltaX + 0.5, Y + 1, Z + deltaZ + 0.5));
                     return;
                 }
             }
