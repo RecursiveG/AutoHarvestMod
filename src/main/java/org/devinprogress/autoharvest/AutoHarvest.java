@@ -11,6 +11,7 @@ import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
@@ -35,15 +36,14 @@ public class AutoHarvest {
     private boolean harvestTick=true;
     private KeyBinding toggleKey=new KeyBinding("Toggle Enabled/Disabled", Keyboard.KEY_H,"Auto Harvest Mod");
     private static int harvestRange=1;
-    private static PlayerControllerMP controller=null;
     private static final Set<Integer> grassBlockIds =new HashSet<Integer>(Arrays.asList(new Integer[]{
             6,31,32,37,38,39,40,175
     }));
+    private Minecraft mc=null;
     private static final Set<Item> plantableItems=new HashSet<Item>(){{
         add(Items.wheat_seeds);
         add(Items.carrot);
         add(Items.potato);
-        add(Items.poisonous_potato);
         add(Items.melon_seeds);
         add(Items.pumpkin_seeds);
     }};
@@ -76,7 +76,7 @@ public class AutoHarvest {
         if(toggleKey.isPressed()){
             if(!enabled){
                 enabled=true;
-                controller=FMLClientHandler.instance().getClient().playerController;
+                mc=FMLClientHandler.instance().getClient();
                 sendPlayerPrivateMsg("[Auto Harvest] Enabled");
             }else{
                 enabled=false;
@@ -103,13 +103,13 @@ public class AutoHarvest {
     private void doClearGrass(EntityPlayer p){
         World w=p.worldObj;
         int X=(int)Math.floor(p.posX);
-        int Y=(int)Math.floor(p.posY-1.61);//the "leg block"
+        int Y=(int)Math.floor(p.posY-1.45);//the "leg block"
         int Z=(int)Math.floor(p.posZ);
         for(int deltaY=-1;deltaY<=1;++deltaY)
             for(int deltaX=-2;deltaX<=2;++deltaX)
                 for(int deltaZ=-2;deltaZ<=2;++deltaZ)
                     if(canClearGrass(w,X + deltaX, Y+deltaY, Z + deltaZ)){
-                        controller.onPlayerDamageBlock(X + deltaX, Y+deltaY, Z + deltaZ, 1);
+                        mc.playerController.onPlayerDamageBlock(X + deltaX, Y+deltaY, Z + deltaZ, 1);
                         return;
                     }
     }
@@ -117,12 +117,12 @@ public class AutoHarvest {
     private void doHarvest(EntityPlayer p){
         World w=p.worldObj;
         int X=(int)Math.floor(p.posX);
-        int Y=(int)Math.floor(p.posY-1.61);//the "leg block"
+        int Y=(int)Math.floor(p.posY-1.45);//the "leg block"
         int Z=(int)Math.floor(p.posZ);
         for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
             for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
                 if(canHarvest(w,p,X+deltaX,Y,Z+deltaZ)) {
-                    controller.onPlayerDamageBlock(X + deltaX, Y, Z + deltaZ, 1);
+                    mc.playerController.onPlayerDamageBlock(X + deltaX, Y, Z + deltaZ, 1);
                     return;
                 }
             }
@@ -131,13 +131,13 @@ public class AutoHarvest {
     private void doPlant(EntityPlayer p){
         World w=p.worldObj;
         int X=(int)Math.floor(p.posX);
-        int Y=(int)Math.floor(p.posY-2.61);//Block player stand on;
+        int Y=(int)Math.floor(p.posY-2.45);//Block player stand on;
         int Z=(int)Math.floor(p.posZ);
         for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
             for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
                 if(canPlantOn(w, p,X + deltaX, Y, Z + deltaZ)) {
-                    ItemStack seed=FMLClientHandler.instance().getClient().thePlayer.inventory.getCurrentItem();
-                    controller.onPlayerRightClick(p,w,seed,X + deltaX, Y, Z + deltaZ,1,
+                    ItemStack seed=mc.thePlayer.inventory.getCurrentItem();
+                    mc.playerController.onPlayerRightClick(p,w,seed,X + deltaX, Y, Z + deltaZ,1,
                                 Vec3.createVectorHelper(X + deltaX+0.5, Y+1, Z + deltaZ+0.5));
                     return;
                 }
