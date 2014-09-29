@@ -9,31 +9,57 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
-import ibxm.Player;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemSeeds;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import org.lwjgl.input.Keyboard;
+
+import java.util.*;
 
 /**
  * Created by recursiveg on 14-9-28.
  */
 
-@Mod(modid="autoharvest", name="Auto Harvest", version="0.1-dev")
+@Mod(modid="autoharvest", name="Auto Harvest Mod", version="0.1-dev")
 public class AutoHarvest {
     private boolean enabled=false;
     private boolean harvestTick=true;
-    private KeyBinding toggleKey=new KeyBinding("Toggle Status", Keyboard.KEY_H,"Auto Harvest Mod");
-    private static int[] delta={-1,0,1};
+    private KeyBinding toggleKey=new KeyBinding("Toggle Enabled/Disabled", Keyboard.KEY_H,"Auto Harvest Mod");
+    private static int harvestRange=1;
+    private static PlayerControllerMP controller=null;
+    private static final Set<Integer> grassBlockIds =new HashSet<Integer>(Arrays.asList(new Integer[]{
+            6,31,32,37,38,39,40,175
+    }));
+    private static final Set<Item> plantableItems=new HashSet<Item>(){{
+        add(Items.wheat_seeds);
+        add(Items.carrot);
+        add(Items.potato);
+        add(Items.poisonous_potato);
+        add(Items.melon_seeds);
+        add(Items.pumpkin_seeds);
+    }};
+    private static final Map<Class<?>,Item> harvestMap=new HashMap<Class<?>,Item>(){{
+        put(BlockCrops.class,Items.wheat_seeds);
+        put(BlockCarrot.class,Items.carrot);
+        put(BlockPotato.class,Items.potato);
+        put(BlockNetherWart.class,Items.nether_wart);
+    }};
+    private static final Map<Class<?>,Integer> cropMatureData=new HashMap<Class<?>, Integer>(){{
+        put(BlockCrops.class,7);
+        put(BlockCarrot.class,7);
+        put(BlockPotato.class,7);
+        put(BlockNetherWart.class,3);
+    }};
+
 
     @Mod.EventHandler
     public void load(FMLInitializationEvent event) {
@@ -42,91 +68,102 @@ public class AutoHarvest {
         FMLCommonHandler.instance().bus().register(this);
     }
 
+    private void sendPlayerPrivateMsg(String str){
+        FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText(str));
+    }
     @SubscribeEvent
     public void onToggle(InputEvent.KeyInputEvent e){
         if(toggleKey.isPressed()){
-            //off->harvest->plant
-            /*if(!enabled){
-                enabled=true;
-                harvestTick=true;
-                FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText("[Auto Harvest] Current Mode: Harvest"));
-            }else if(enabled&&harvestTick){
-                harvestTick=false;
-                FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText("[Auto Harvest] Current Mode: Plant"));
-            }else{
-                enabled=false;
-                FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText("[Auto Harvest] Current Mode: OFF"));
-            }*/
             if(!enabled){
                 enabled=true;
-                FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText("[Auto Harvest] Current Mode: ON"));
+                controller=FMLClientHandler.instance().getClient().playerController;
+                sendPlayerPrivateMsg("[Auto Harvest] Enabled");
             }else{
                 enabled=false;
-                FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new ChatComponentText("[Auto Harvest] Current Mode: OFF"));
+                sendPlayerPrivateMsg("[Auto Harvest] Disabled");
             }
         }
     }
 
     @SubscribeEvent
-    public void onTick(TickEvent.PlayerTickEvent e){
+    public void onInGameTick(TickEvent.PlayerTickEvent e){//one block a tick
         if(enabled && e.side==Side.CLIENT && e.player!=null){
-            harvestTick=!harvestTick;
-            if(harvestTick)
-                doHarvest(e.player);
-            else
-                doPlant(e.player);
+            if(e.player.inventory.getCurrentItem()==null){
+                doClearGrass(e.player);
+            }else{
+                if(harvestTick)
+                    doHarvest(e.player);
+                else
+                    doPlant(e.player);
+                harvestTick=!harvestTick;
+            }
         }
+    }
+
+    private void doClearGrass(EntityPlayer p){
+        World w=p.worldObj;
+        int X=(int)Math.floor(p.posX);
+        int Y=(int)Math.floor(p.posY-1.61);//the "leg block"
+        int Z=(int)Math.floor(p.posZ);
+        for(int deltaY=-1;deltaY<=1;++deltaY)
+            for(int deltaX=-2;deltaX<=2;++deltaX)
+                for(int deltaZ=-2;deltaZ<=2;++deltaZ)
+                    if(canClearGrass(w,X + deltaX, Y+deltaY, Z + deltaZ)){
+                        controller.onPlayerDamageBlock(X + deltaX, Y+deltaY, Z + deltaZ, 1);
+                        return;
+                    }
     }
 
     private void doHarvest(EntityPlayer p){
         World w=p.worldObj;
         int X=(int)Math.floor(p.posX);
-        int Y=(int)Math.floor(p.posY-1.61);
+        int Y=(int)Math.floor(p.posY-1.61);//the "leg block"
         int Z=(int)Math.floor(p.posZ);
-        for(int deltaX:delta)
-            for(int deltaZ:delta){
-                if(canHarvest(w,X+deltaX,Y,Z+deltaZ)) {
-                    FMLClientHandler.instance().getClient().playerController.onPlayerDamageBlock(X + deltaX, Y, Z + deltaZ, 1);
+        for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
+            for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
+                if(canHarvest(w,p,X+deltaX,Y,Z+deltaZ)) {
+                    controller.onPlayerDamageBlock(X + deltaX, Y, Z + deltaZ, 1);
                     return;
                 }
             }
-    }
-
-    private boolean canHarvest(World w,int X,int Y,int Z){
-        return (w.getBlock(X,Y,Z)instanceof BlockCrops&&w.getBlockMetadata(X,Y,Z)==7);
     }
 
     private void doPlant(EntityPlayer p){
         World w=p.worldObj;
         int X=(int)Math.floor(p.posX);
-        int Y=(int)Math.floor(p.posY-1.61);
+        int Y=(int)Math.floor(p.posY-2.61);//Block player stand on;
         int Z=(int)Math.floor(p.posZ);
-
-        Y=Y-1;
-        for(int deltaX:delta)
-            for(int deltaZ:delta){
-                if(canPlantOn(w, X + deltaX, Y, Z + deltaZ)) {
-                    ItemStack seed=selectSeed(p);
-                    if(seed!=null)
-                        FMLClientHandler.instance().getClient().playerController.onPlayerRightClick(p,w,seed,X + deltaX, Y, Z + deltaZ,1,
+        for(int deltaX=-harvestRange;deltaX<=harvestRange;++deltaX)
+            for(int deltaZ=-harvestRange;deltaZ<=harvestRange;++deltaZ){
+                if(canPlantOn(w, p,X + deltaX, Y, Z + deltaZ)) {
+                    ItemStack seed=FMLClientHandler.instance().getClient().thePlayer.inventory.getCurrentItem();
+                    controller.onPlayerRightClick(p,w,seed,X + deltaX, Y, Z + deltaZ,1,
                                 Vec3.createVectorHelper(X + deltaX+0.5, Y+1, Z + deltaZ+0.5));
-                    else{
-                        //System.out.println("seed==null");
-                    }
                     return;
                 }
             }
     }
 
-    private boolean canPlantOn(World w,int X,int Y,int Z){
-        return (w.getBlock(X,Y,Z) instanceof BlockFarmland)&&(w.getBlock(X,Y+1,Z)instanceof BlockAir);
+    private boolean canClearGrass(World w,int X,int Y,int Z){
+        return grassBlockIds.contains(Block.getIdFromBlock(w.getBlock(X, Y, Z)));
     }
 
-    private ItemStack selectSeed(EntityPlayer p){
-        if(p==null||p.inventory==null||p.inventory.getCurrentItem()==null)return null;
-        if(p.inventory.getCurrentItem().getItem() instanceof ItemSeeds)
-            return p.inventory.getCurrentItem();
-        else
-            return null;
+    private boolean canHarvest(World w,EntityPlayer p,int X,int Y,int Z){
+        Class<?> c=w.getBlock(X, Y, Z).getClass();
+        return harvestMap.containsKey(c)&&harvestMap.get(c)==p.inventory.getCurrentItem().getItem()&&CropGrown(w,X,Y,Z,c);
+    }
+
+    private boolean CropGrown(World w,int X,int Y,int Z,Class<?> cropClass){
+        int meta=w.getBlockMetadata(X,Y,Z);
+        return cropMatureData.get(cropClass)==meta;
+    }
+
+    private boolean canPlantOn(World w,EntityPlayer p,int X,int Y,int Z){
+        Item i=p.inventory.getCurrentItem().getItem();
+        boolean haveSpace=w.getBlock(X,Y+1,Z)instanceof BlockAir;
+        boolean isFarm=w.getBlock(X,Y,Z) instanceof BlockFarmland;
+        boolean CropOnFarm=plantableItems.contains(i);
+        boolean nether_wart=(w.getBlock(X,Y,Z) instanceof BlockSoulSand)&&(i==Items.nether_wart);
+        return haveSpace&&(nether_wart||(isFarm&&CropOnFarm));
     }
 }
