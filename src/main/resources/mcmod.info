@@ -1,0 +1,10 @@
+[
+{
+  "modid": "autoharvest",
+  "name": "Auto Harvest",
+  "description": "Automatically harvest and re-plant crops",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["RecursiveG"]
+}
+]
