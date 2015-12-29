@@ -1,30 +1,28 @@
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
         }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
     }
 }
+apply plugin: 'net.minecraftforge.gradle.forge'
 
-apply plugin: 'forge'
-
-version = "1.0"
+version = "0.2-dev"
 group= "org.devinprogress.autoharvest"
-archivesBaseName = "AutoHarvestMod"
+archivesBaseName = "AutoHarvest-1.8"
 
 minecraft {
-    version = "1.7.2-10.12.2.1121"
-    assetDir = "eclipse/assets"
+    version = "1.8-11.14.4.1563"
+    runDir = "../gameDir"
+    mappings = "stable_18"
 }
+
+dependencies { }
 
 processResources
 {
