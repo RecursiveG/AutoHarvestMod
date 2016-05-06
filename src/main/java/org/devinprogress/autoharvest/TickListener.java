@@ -3,8 +3,6 @@ package org.devinprogress.autoharvest;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -12,20 +10,18 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TickListener {
     private int tickCount = 0;
@@ -38,7 +34,6 @@ public class TickListener {
         this.mode = mode;
     }
 
-    @SuppressWarnings("unused")
     @SubscribeEvent
     public void onTick(TickEvent.PlayerTickEvent e) {
         if (e.side == Side.CLIENT && e.player != null &&
@@ -62,10 +57,6 @@ public class TickListener {
                         feedTick(e.player);
                         break;
                     }
-//                    case ATTACK: {
-//                        attackTick(e.player);
-//                        break;
-//                    }
                 }
             }
         }
@@ -121,15 +112,15 @@ public class TickListener {
                 return true;
             }
         }
-        AutoHarvest.sendI18nMsg("notify.lack_of_seed");
-        AutoHarvest.sendI18nMsg("notify.switch_to.off");
+        AutoHarvest.msg("notify.lack_of_seed");
+        AutoHarvest.msg("notify.switch_to.off");
         AutoHarvest.instance.toNextMode(AutoHarvest.HarvestMode.OFF);
 
         return false;
     }
 
     private void plantTick(EntityPlayer p) {
-        ItemStack handItem = p.getHeldItem();
+        ItemStack handItem = p.getHeldItem(EnumHand.MAIN_HAND);
         if (!CropManager.isSeed(handItem)) {
             return;
         }
@@ -148,12 +139,14 @@ public class TickListener {
                         && downBlock != Blocks.air
                         && CropManager.canPlantOn(handItem.getItem(), w, downPos, downBlock)) {
                     if (handItem.stackSize <= REFILL_THRESHOLD && tryFillItemInHand(p))
-                        handItem = p.getHeldItem();
-                    FMLClientHandler.instance().getClient().playerController.onPlayerRightClick(
+                        handItem = p.getHeldItem(EnumHand.MAIN_HAND);
+
+                    FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                             FMLClientHandler.instance().getClientPlayerEntity(),
                             FMLClientHandler.instance().getWorldClient(),
                             handItem, downPos, EnumFacing.UP,
-                            new Vec3(X + deltaX + 0.5, Y, Z + deltaZ + 0.5));
+                            new Vec3d(X + deltaX + 0.5, Y, Z + deltaZ + 0.5),
+                            EnumHand.MAIN_HAND);
                 }
             }
     }
@@ -161,7 +154,8 @@ public class TickListener {
     private boolean tryFeedAnimal(Class<? extends EntityAnimal> type, AxisAlignedBB box, EntityPlayer p) {
         for (EntityAnimal e : (List<EntityAnimal>) (p.getEntityWorld().getEntitiesWithinAABB(type, box))) {
             if (e.getGrowingAge() == 0 && !e.isInLove()) {
-                FMLClientHandler.instance().getClient().playerController.interactWithEntitySendPacket(p, e);
+                FMLClientHandler.instance().getClient().playerController
+                        .func_187097_a(p, e, p.getHeldItem(EnumHand.MAIN_HAND), EnumHand.MAIN_HAND); //interactWithEntity()
                 return true;
             }
         }
@@ -169,54 +163,32 @@ public class TickListener {
     }
 
     private void feedTick(EntityPlayer p) {
-        ItemStack handItem = p.getHeldItem();
+        ItemStack handItem = p.getHeldItem(EnumHand.MAIN_HAND);
         if (handItem == null) return;
         if (handItem.getItem().equals(Items.carrot)) { //pig & rabbit
             if (handItem.stackSize <= REFILL_THRESHOLD) tryFillItemInHand(p);
-            AxisAlignedBB box = AxisAlignedBB.fromBounds(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
+            AxisAlignedBB box = new AxisAlignedBB(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
             if (tryFeedAnimal(EntityPig.class, box, p)) return;
             if (tryFeedAnimal(EntityRabbit.class, box, p)) return;
         } else if (handItem.getItem().equals(Items.wheat)) { //cow & sheep & mooshrom
             if (handItem.stackSize <= REFILL_THRESHOLD) tryFillItemInHand(p);
-            AxisAlignedBB box = AxisAlignedBB.fromBounds(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
+            AxisAlignedBB box = new AxisAlignedBB(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
             if (tryFeedAnimal(EntityCow.class, box, p)) return;
             if (tryFeedAnimal(EntityMooshroom.class, box, p)) return;
             if (tryFeedAnimal(EntitySheep.class, box, p)) return;
         } else if (handItem.getItem().equals(Items.wheat_seeds)) { //chicken
             if (handItem.stackSize <= REFILL_THRESHOLD) tryFillItemInHand(p);
-            AxisAlignedBB box = AxisAlignedBB.fromBounds(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
+            AxisAlignedBB box = new AxisAlignedBB(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
             if (tryFeedAnimal(EntityChicken.class, box, p)) return;
         } else if (handItem.getItem().equals(Items.shears)) { // wool
-            AxisAlignedBB box = AxisAlignedBB.fromBounds(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
+            AxisAlignedBB box = new AxisAlignedBB(p.posX - 2, p.posY - 1, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
             for (EntitySheep e : (List<EntitySheep>) (p.getEntityWorld().getEntitiesWithinAABB(EntitySheep.class, box))) {
                 if (!e.isChild() && !e.getSheared()) {
-                    FMLClientHandler.instance().getClient().playerController.interactWithEntitySendPacket(p, e);
+                    FMLClientHandler.instance().getClient().playerController
+                            .func_187097_a(p, e, p.getHeldItem(EnumHand.MAIN_HAND), EnumHand.MAIN_HAND); //interactWithEntity()
                     return;
                 }
             }
         }
-    }
-
-    private long gameTick = 0;
-    private static final int ATTACK_GAP = 5;
-    private Map<Entity, Long> attackTime = new HashMap<Entity, Long>();
-
-    private void attackTick(EntityPlayer p) {
-        gameTick += tickRate;
-        AxisAlignedBB box = AxisAlignedBB.fromBounds(p.posX - 2, p.posY - 2, p.posZ - 2, p.posX + 2, p.posY + 3, p.posZ + 2);
-        List<Entity> aroundMobs = p.getEntityWorld().getEntitiesWithinAABB(EntityZombie.class, box);
-        for (Entity e : aroundMobs) {
-            Long t = attackTime.get(e);
-            if (t == null || t < gameTick) {
-                FMLClientHandler.instance().getClient().playerController.attackEntity(p, e);
-                attackTime.put(e, gameTick);
-                return;
-            }
-        }
-    }
-
-    public void self_stop() {
-        // CLEANUP
-        FMLCommonHandler.instance().bus().unregister(this);
     }
 }

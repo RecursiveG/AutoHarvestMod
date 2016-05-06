@@ -18,7 +18,7 @@ public class KeyPressListener {
         if (toggleKey.isPressed()) {
             AutoHarvest a = AutoHarvest.instance;
             String modeName = a.toNextMode().toString().toLowerCase();
-            AutoHarvest.sendI18nMsg("notify.switch_to." + modeName);
+            AutoHarvest.msg("notify.switch_to." + modeName);
         }
     }
 }

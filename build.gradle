@@ -1,3 +1,5 @@
+
+// For those who want the bleeding edge
 buildscript {
     repositories {
         jcenter()
@@ -7,19 +9,22 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "2.0"
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+version = "2.1"
 group= "org.devinprogress.autoharvest"
-archivesBaseName = "AutoHarvest-1.8"
+archivesBaseName = "AutoHarvest-mc1.9-forge1891"
 
 minecraft {
-    version = "1.8-11.14.4.1563"
+    version = "1.9-12.16.1.1891"
     runDir = "../gameDir"
-    mappings = "stable_18"
+    mappings = "snapshot_20160312"
 }
 
 dependencies { }

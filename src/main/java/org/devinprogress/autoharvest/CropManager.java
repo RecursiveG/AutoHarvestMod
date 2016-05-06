@@ -6,7 +6,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -29,7 +29,6 @@ public class CropManager {
         add(Block.getBlockFromName("brown_mushroom"));
         add(Block.getBlockFromName("red_mushroom"));
         add(Block.getBlockFromName("double_plant"));
-        add(Blocks.fire);
     }};
 
     public static final Map<Block, Item> CROP_BLOCKS = new HashMap<Block, Item>() {{
