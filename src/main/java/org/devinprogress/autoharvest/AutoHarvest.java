@@ -13,7 +13,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class AutoHarvest {
     public enum HarvestMode {
-        SMART,  // Harvest then re-plant
+        // SMART,  // Harvest then re-plant
         EAGER,  // Harvest only
         PLANT,  // Plant only
         SEED,   // Harvest seeds & flowers
@@ -38,7 +38,7 @@ public class AutoHarvest {
 
     private void setEnabled() {
         if (listener == null) {
-            listener = new TickListener(mode);
+            listener = new TickListener(mode, 2, FMLClientHandler.instance().getClientPlayerEntity());
             MinecraftForge.EVENT_BUS.register(listener);
         }
     }

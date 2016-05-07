@@ -8,3 +8,4 @@ notify.switch_to.attack=已切换到 攻击 模式
 notify.switch_to.off=自动收割 已关闭
 notify.lack_of_seed=缺少种子
 notify.prefix=[自动收割]
+notify.tick_error=发生错误

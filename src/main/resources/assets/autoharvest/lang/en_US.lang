@@ -8,3 +8,4 @@ notify.switch_to.attack=Switch to: Attack
 notify.switch_to.off=AutoHarvest turned off
 notify.lack_of_seed=You need more seeds
 notify.prefix=[AutoHarvest]
+notify.tick_error=Internal Error Happened

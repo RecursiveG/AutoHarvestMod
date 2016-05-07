@@ -24,7 +24,7 @@ archivesBaseName = "AutoHarvest-mc1.9-forge1891"
 minecraft {
     version = "1.9-12.16.1.1891"
     runDir = "../gameDir"
-    mappings = "snapshot_20160312"
+    mappings = "snapshot_20160506"
 }
 
 dependencies { }
