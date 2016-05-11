@@ -6,6 +6,8 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockOldLog;
+import net.minecraft.block.BlockPlanks;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.passive.*;
 import net.minecraft.init.Blocks;
@@ -109,5 +111,9 @@ public class CropManager {
     public static boolean canPlantOn(Item m, World w, BlockPos p) {
         if (!SEED_MAP.containsValue(m)) return false;
         return SEED_MAP.inverse().get(m).canPlaceBlockAt(w, p);
+    }
+
+    public static boolean isJungleLog(IBlockState s) {
+        return s.getBlock() == Blocks.LOG && s.getValue(BlockOldLog.VARIANT) == BlockPlanks.EnumType.JUNGLE;
     }
 }

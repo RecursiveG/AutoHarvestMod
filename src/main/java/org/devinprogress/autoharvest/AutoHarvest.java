@@ -1,6 +1,10 @@
 package org.devinprogress.autoharvest;
 
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.inventory.ClickType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.CPacketClickWindow;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.FMLClientHandler;
@@ -72,5 +76,19 @@ public class AutoHarvest {
                 I18n.format("notify.prefix")
                         + I18n.format(key, obj)
         ));
+    }
+
+    public static void moveInventoryItem(int srcIdx, int dstIdx) {
+        EntityPlayerSP p = FMLClientHandler.instance().getClientPlayerEntity();
+        ItemStack[] a = p.inventory.mainInventory;
+        if (a[srcIdx] != null) {
+            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a[srcIdx], (short) 0));
+            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, dstIdx < 9 ? dstIdx + 36 : dstIdx, 0, ClickType.PICKUP, a[dstIdx], (short) 1));
+            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a[srcIdx], (short) 2));
+//            return;
+            ItemStack tmp = a[srcIdx];
+            a[srcIdx] = a[dstIdx];
+            a[dstIdx] = tmp;
+        }
     }
 }

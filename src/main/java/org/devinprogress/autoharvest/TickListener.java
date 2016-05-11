@@ -85,14 +85,27 @@ public class TickListener {
         int Z = (int) Math.floor(p.posZ);
         for (int deltaX = -range; deltaX <= range; ++deltaX)
             for (int deltaZ = -range; deltaZ <= range; ++deltaZ) {
-                BlockPos pos = new BlockPos(X + deltaX, Y, Z + deltaZ);
-                IBlockState state = w.getBlockState(pos);
-                Block b = state.getBlock();
-                if (CropManager.isCropMature(w, pos, state, b)) {
-                    Minecraft.getMinecraft().playerController.onPlayerDamageBlock(pos, EnumFacing.UP);
-                    return;
+                for (int deltaY = -1; deltaY <= 1; ++deltaY) {
+                    BlockPos pos = new BlockPos(X + deltaX, Y + deltaY, Z + deltaZ);
+                    IBlockState state = w.getBlockState(pos);
+                    Block b = state.getBlock();
+                    if (CropManager.isCropMature(w, pos, state, b)) {
+                        Minecraft.getMinecraft().playerController.onPlayerDamageBlock(pos, EnumFacing.UP);
+                        return;
+                    }
                 }
             }
+    }
+
+    private void minusOneInHand() {
+        ItemStack st = p.getHeldItem(EnumHand.MAIN_HAND);
+        if (st != null) {
+            if (st.stackSize <= 1) {
+                p.setHeldItem(EnumHand.MAIN_HAND, null);
+            } else {
+                st.stackSize--;
+            }
+        }
     }
 
     private ItemStack lastUsedItem = null;
@@ -100,14 +113,30 @@ public class TickListener {
     private ItemStack tryFillItemInHand() {
         ItemStack itemStack = p.getHeldItem(EnumHand.MAIN_HAND);
         if (itemStack == null) {
-            // TODO
-            AutoHarvest.msg("notify.lack_of_seed");
-            AutoHarvest.msg("notify.switch_to.off");
-            AutoHarvest.instance.toNextMode(AutoHarvest.HarvestMode.OFF);
-            lastUsedItem = null;
-            return null;
+            int supplmentIdx = -1;
+            ItemStack stack = null;
+            if (lastUsedItem != null) {
+                ItemStack[] inv = p.inventory.mainInventory;
+                for (int idx = 0; idx < 36; ++idx) {
+                    if (inv[idx] != null && inv[idx].getItem() == lastUsedItem.getItem() &&
+                            inv[idx].getItemDamage() == lastUsedItem.getItemDamage() &&
+                            inv[idx].hasTagCompound() == false) {
+                        supplmentIdx = idx;
+                        stack = inv[idx];
+                        break;
+                    }
+                }
+            }
+            if (supplmentIdx < 0) {
+                AutoHarvest.msg("notify.lack_of_seed");
+                AutoHarvest.msg("notify.switch_to.off");
+                AutoHarvest.instance.toNextMode(AutoHarvest.HarvestMode.OFF);
+                lastUsedItem = null;
+                return null;
+            }
+            AutoHarvest.moveInventoryItem(supplmentIdx, p.inventory.currentItem);
+            return stack;
         } else {
-            lastUsedItem = null;
             return itemStack;
         }
     }
@@ -117,12 +146,10 @@ public class TickListener {
         if (handItem == null) return;
         if (!CropManager.isSeed(handItem)) {
             if (CropManager.isCocoa(handItem)) {
-                lastUsedItem = handItem;
-                plantCocoaTick();
+                plantCocoaTick(handItem);
             }
             return;
         }
-        lastUsedItem = handItem;
 
         World w = p.worldObj;
         int X = (int) Math.floor(p.posX);
@@ -141,12 +168,94 @@ public class TickListener {
                             handItem, downPos, EnumFacing.UP,
                             new Vec3d(X + deltaX + 0.5, Y, Z + deltaZ + 0.5),
                             EnumHand.MAIN_HAND);
+                    lastUsedItem = handItem;
+                    minusOneInHand();
                 }
             }
     }
 
-    private void plantCocoaTick() {
-        // TODO
+    private void plantCocoaTick(ItemStack handItem) {
+        World w = p.worldObj;
+        int X = (int) Math.floor(p.posX);
+        int Y = (int) Math.floor(p.posY + 0.2D);//the "leg block" , in case in soul sand
+        int Z = (int) Math.floor(p.posZ);
+
+        for (int deltaX = -range; deltaX <= range; ++deltaX) {
+            for (int deltaZ = -range; deltaZ <= range; ++deltaZ) {
+                for (int deltaY = 0; deltaY <= 7; ++deltaY) {
+                    BlockPos pos = new BlockPos(X + deltaX, Y + deltaY, Z + deltaZ);
+                    if (!canReachBlock(p, pos)) continue;
+                    IBlockState jungleBlock = w.getBlockState(pos);
+                    if (CropManager.isJungleLog(jungleBlock)) {
+                        BlockPos tmpPos;
+
+                        EnumFacing tmpFace = EnumFacing.EAST;
+                        tmpPos = pos.add(tmpFace.getDirectionVec());
+                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
+                                    p,
+                                    FMLClientHandler.instance().getWorldClient(),
+                                    handItem, pos, tmpFace,
+                                    new Vec3d(X + deltaX + 1, Y + deltaY + 0.5, Z + deltaZ + 0.5),
+                                    EnumHand.MAIN_HAND);
+                            lastUsedItem = handItem;
+                            minusOneInHand();
+                            return;
+                        }
+
+                        tmpFace = EnumFacing.WEST;
+                        tmpPos = pos.add(tmpFace.getDirectionVec());
+                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
+                                    p,
+                                    FMLClientHandler.instance().getWorldClient(),
+                                    handItem, pos, tmpFace,
+                                    new Vec3d(X + deltaX, Y + deltaY + 0.5, Z + deltaZ + 0.5),
+                                    EnumHand.MAIN_HAND);
+                            lastUsedItem = handItem;
+                            minusOneInHand();
+                            return;
+                        }
+
+                        tmpFace = EnumFacing.SOUTH;
+                        tmpPos = pos.add(tmpFace.getDirectionVec());
+                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
+                                    p,
+                                    FMLClientHandler.instance().getWorldClient(),
+                                    handItem, pos, tmpFace,
+                                    new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ + 1),
+                                    EnumHand.MAIN_HAND);
+                            lastUsedItem = handItem;
+                            minusOneInHand();
+                            return;
+                        }
+
+                        tmpFace = EnumFacing.NORTH;
+                        tmpPos = pos.add(tmpFace.getDirectionVec());
+                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
+                                    p,
+                                    FMLClientHandler.instance().getWorldClient(),
+                                    handItem, pos, tmpFace,
+                                    new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ),
+                                    EnumHand.MAIN_HAND);
+                            lastUsedItem = handItem;
+                            minusOneInHand();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean canReachBlock(EntityPlayerSP playerEntity, BlockPos blockpos) {
+        double d0 = playerEntity.posX - ((double) blockpos.getX() + 0.5D);
+        double d1 = playerEntity.posY - ((double) blockpos.getY() + 0.5D) + 1.5D;
+        double d2 = playerEntity.posZ - ((double) blockpos.getZ() + 0.5D);
+        double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+        return d3 <= 36D;
     }
 
     private void feedTick() {
@@ -161,6 +270,7 @@ public class TickListener {
                     FMLClientHandler.instance().getClient().playerController
                             .interactWithEntity(p, e, handItem, EnumHand.MAIN_HAND);
                     lastUsedItem = handItem;
+                    minusOneInHand();
                     return;
                 }
             }
