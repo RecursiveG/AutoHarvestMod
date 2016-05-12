@@ -126,6 +126,8 @@ public class TickListener {
                         break;
                     }
                 }
+            } else {
+                return null;
             }
             if (supplmentIdx < 0) {
                 AutoHarvest.msg("notify.lack_of_seed");
@@ -170,6 +172,7 @@ public class TickListener {
                             EnumHand.MAIN_HAND);
                     lastUsedItem = handItem;
                     minusOneInHand();
+                    return;
                 }
             }
     }

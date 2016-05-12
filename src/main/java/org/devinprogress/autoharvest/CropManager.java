@@ -85,7 +85,7 @@ public class CropManager {
         if (b instanceof BlockCrops) {
             return ((BlockCrops) b).isMaxAge(stat);
         } else if (b == NETHER_WART) {
-            return b.getMetaFromState(stat) >= 7;
+            return b.getMetaFromState(stat) >= 3;
         } else if (b == REED_BLOCK) {
             Block blockDown = w.getBlockState(pos.down()).getBlock();
             Block blockDown2 = w.getBlockState(pos.down(2)).getBlock();
