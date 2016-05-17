@@ -9,6 +9,7 @@ import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -269,12 +270,14 @@ public class TickListener {
                 p.posX + range, p.posY + range, p.posZ + range);
         for (Class<? extends EntityAnimal> type : animalList) {
             for (EntityAnimal e : p.getEntityWorld().getEntitiesWithinAABB(type, box)) {
-                if (e.getGrowingAge() == 0 && !e.isInLove()) {
-                    FMLClientHandler.instance().getClient().playerController
+                if (e.getGrowingAge() >= 0 && !e.isInLove()) {
+                    EnumActionResult result = FMLClientHandler.instance().getClient().playerController
                             .interactWithEntity(p, e, handItem, EnumHand.MAIN_HAND);
-                    lastUsedItem = handItem;
-                    minusOneInHand();
-                    return;
+                    if (result == EnumActionResult.SUCCESS) {
+                        lastUsedItem = handItem;
+                        minusOneInHand();
+                        return;
+                    }
                 }
             }
         }
