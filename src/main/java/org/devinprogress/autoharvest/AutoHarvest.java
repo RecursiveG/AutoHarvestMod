@@ -5,6 +5,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.CPacketClickWindow;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.FMLClientHandler;
@@ -72,7 +73,7 @@ public class AutoHarvest {
     }
 
     public static void msg(String key, Object... obj) {
-        FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new TextComponentString(
+        FMLClientHandler.instance().getClient().player.sendMessage(new TextComponentString(
                 I18n.format("notify.prefix")
                         + I18n.format(key, obj)
         ));
@@ -80,15 +81,15 @@ public class AutoHarvest {
 
     public static void moveInventoryItem(int srcIdx, int dstIdx) {
         EntityPlayerSP p = FMLClientHandler.instance().getClientPlayerEntity();
-        ItemStack[] a = p.inventory.mainInventory;
-        if (a[srcIdx] != null) {
-            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a[srcIdx], (short) 0));
-            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, dstIdx < 9 ? dstIdx + 36 : dstIdx, 0, ClickType.PICKUP, a[dstIdx], (short) 1));
-            p.sendQueue.addToSendQueue(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a[srcIdx], (short) 2));
+        NonNullList<ItemStack> a = p.inventory.mainInventory;
+        if (a.get(srcIdx) != null) {
+            p.connection.sendPacket(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a.get(srcIdx), (short) 0));
+            p.connection.sendPacket(new CPacketClickWindow(0, dstIdx < 9 ? dstIdx + 36 : dstIdx, 0, ClickType.PICKUP, a.get(dstIdx), (short) 1));
+            p.connection.sendPacket(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a.get(srcIdx), (short) 2));
 //            return;
-            ItemStack tmp = a[srcIdx];
-            a[srcIdx] = a[dstIdx];
-            a[dstIdx] = tmp;
+            ItemStack tmp = a.get(srcIdx);
+            a.set(srcIdx, a.get(dstIdx));
+            a.set(dstIdx, tmp);
         }
     }
 }

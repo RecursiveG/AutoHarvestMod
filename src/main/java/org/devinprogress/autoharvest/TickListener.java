@@ -28,6 +28,8 @@ public class TickListener {
     private final int range;
     private final EntityPlayerSP p;
 
+    private int actionCounter = 0;
+
     public TickListener(AutoHarvest.HarvestMode mode, int range, EntityPlayerSP player) {
         this.mode = mode;
         this.range = range;
@@ -37,6 +39,7 @@ public class TickListener {
     @SubscribeEvent
     public void onTick(TickEvent.PlayerTickEvent e) {
         try {
+            actionCounter = 0;
             if (e.side != Side.CLIENT || e.player != p) return;
             switch (mode) {
                 // case SMART: smartTick();break;
@@ -53,6 +56,8 @@ public class TickListener {
                     feedTick();
                     break;
             }
+//            if (actionCounter != 0)
+//            System.out.printf("Actions: %d\n", actionCounter);
         } catch (Exception ex) {
             AutoHarvest.msg("notify.tick_error");
             AutoHarvest.msg("notify.switch_to.off");
@@ -63,7 +68,7 @@ public class TickListener {
 
     /* clear all grass on land */
     private void seedTick() {
-        World w = p.worldObj;
+        World w = p.getEntityWorld();
         int X = (int) Math.floor(p.posX);
         int Y = (int) Math.floor(p.posY);//the "leg block"
         int Z = (int) Math.floor(p.posZ);
@@ -80,7 +85,7 @@ public class TickListener {
 
     /* harvest all mature crops */
     private void harvestTick() {
-        World w = p.worldObj;
+        World w = p.getEntityWorld();
         int X = (int) Math.floor(p.posX);
         int Y = (int) Math.floor(p.posY + 0.2D);//the "leg block", in case in soul sand
         int Z = (int) Math.floor(p.posZ);
@@ -101,10 +106,10 @@ public class TickListener {
     private void minusOneInHand() {
         ItemStack st = p.getHeldItem(EnumHand.MAIN_HAND);
         if (st != null) {
-            if (st.stackSize <= 1) {
+            if (st.getCount() <= 1) {
                 p.setHeldItem(EnumHand.MAIN_HAND, null);
             } else {
-                st.stackSize--;
+                st.setCount(st.getCount() - 1);
             }
         }
     }
@@ -117,7 +122,7 @@ public class TickListener {
             int supplmentIdx = -1;
             ItemStack stack = null;
             if (lastUsedItem != null) {
-                ItemStack[] inv = p.inventory.mainInventory;
+                ItemStack[] inv = (ItemStack[]) p.inventory.mainInventory.toArray();
                 for (int idx = 0; idx < 36; ++idx) {
                     if (inv[idx] != null && inv[idx].getItem() == lastUsedItem.getItem() &&
                             inv[idx].getItemDamage() == lastUsedItem.getItemDamage() &&
@@ -154,7 +159,7 @@ public class TickListener {
             return;
         }
 
-        World w = p.worldObj;
+        World w = p.getEntityWorld();
         int X = (int) Math.floor(p.posX);
         int Y = (int) Math.floor(p.posY + 0.2D);//the "leg block" , in case in soul sand
         int Z = (int) Math.floor(p.posZ);
@@ -168,7 +173,7 @@ public class TickListener {
                     FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                             p,
                             FMLClientHandler.instance().getWorldClient(),
-                            handItem, downPos, EnumFacing.UP,
+                            downPos, EnumFacing.UP,
                             new Vec3d(X + deltaX + 0.5, Y, Z + deltaZ + 0.5),
                             EnumHand.MAIN_HAND);
                     lastUsedItem = handItem;
@@ -179,7 +184,7 @@ public class TickListener {
     }
 
     private void plantCocoaTick(ItemStack handItem) {
-        World w = p.worldObj;
+        World w = p.getEntityWorld();
         int X = (int) Math.floor(p.posX);
         int Y = (int) Math.floor(p.posY + 0.2D);//the "leg block" , in case in soul sand
         int Z = (int) Math.floor(p.posZ);
@@ -199,7 +204,7 @@ public class TickListener {
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
-                                    handItem, pos, tmpFace,
+                                    pos, tmpFace,
                                     new Vec3d(X + deltaX + 1, Y + deltaY + 0.5, Z + deltaZ + 0.5),
                                     EnumHand.MAIN_HAND);
                             lastUsedItem = handItem;
@@ -213,7 +218,7 @@ public class TickListener {
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
-                                    handItem, pos, tmpFace,
+                                    pos, tmpFace,
                                     new Vec3d(X + deltaX, Y + deltaY + 0.5, Z + deltaZ + 0.5),
                                     EnumHand.MAIN_HAND);
                             lastUsedItem = handItem;
@@ -227,7 +232,7 @@ public class TickListener {
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
-                                    handItem, pos, tmpFace,
+                                    pos, tmpFace,
                                     new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ + 1),
                                     EnumHand.MAIN_HAND);
                             lastUsedItem = handItem;
@@ -241,7 +246,7 @@ public class TickListener {
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
-                                    handItem, pos, tmpFace,
+                                    pos, tmpFace,
                                     new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ),
                                     EnumHand.MAIN_HAND);
                             lastUsedItem = handItem;
@@ -272,7 +277,8 @@ public class TickListener {
             for (EntityAnimal e : p.getEntityWorld().getEntitiesWithinAABB(type, box)) {
                 if (e.getGrowingAge() >= 0 && !e.isInLove()) {
                     EnumActionResult result = FMLClientHandler.instance().getClient().playerController
-                            .interactWithEntity(p, e, handItem, EnumHand.MAIN_HAND);
+                            .interactWithEntity(p, e, EnumHand.MAIN_HAND);
+                    actionCounter += 1;
                     if (result == EnumActionResult.SUCCESS) {
                         lastUsedItem = handItem;
                         minusOneInHand();
@@ -285,7 +291,7 @@ public class TickListener {
             for (EntitySheep e : p.getEntityWorld().getEntitiesWithinAABB(EntitySheep.class, box)) {
                 if (!e.isChild() && !e.getSheared()) {
                     FMLClientHandler.instance().getClient().playerController
-                            .interactWithEntity(p, e, handItem, EnumHand.MAIN_HAND);
+                            .interactWithEntity(p, e, EnumHand.MAIN_HAND);
                     lastUsedItem = handItem;
                     return;
                 }

@@ -9,7 +9,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -19,12 +19,13 @@ targetCompatibility = 1.7
 
 version = "2.1"
 group= "org.devinprogress.autoharvest"
-archivesBaseName = "AutoHarvest-mc1.9-forge1891"
+archivesBaseName = "AutoHarvest-mc1.11.2-forge2227"
 
 minecraft {
-    version = "1.9-12.16.1.1891"
-    runDir = "../gameDir"
-    mappings = "snapshot_20160506"
+    version = "1.11.2-13.20.0.2227"
+    runDir = "../run"
+    mappings = "snapshot_20170206"
+    makeObfSourceJar = false
 }
 
 dependencies { }

@@ -99,12 +99,12 @@ public class CropManager {
     }
 
     public static boolean isSeed(ItemStack stack) {
-        if (stack == null || stack.stackSize <= 0) return false;
+        if (stack == null || stack.getCount() <= 0) return false;
         return SEED_MAP.containsValue(stack.getItem());
     }
 
     public static boolean isCocoa(ItemStack stack) {
-        if (stack == null || stack.stackSize <= 0) return false;
+        if (stack == null || stack.getCount() <= 0) return false;
         return stack.getItem() == Items.DYE && stack.getItemDamage() == EnumDyeColor.BROWN.getDyeDamage();
     }
 
