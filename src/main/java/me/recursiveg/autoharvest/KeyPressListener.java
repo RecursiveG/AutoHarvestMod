@@ -1,4 +1,4 @@
-package org.devinprogress.autoharvest;
+package me.recursiveg.autoharvest;
 
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;

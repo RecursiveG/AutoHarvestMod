@@ -1,4 +1,4 @@
-package org.devinprogress.autoharvest;
+package me.recursiveg.autoharvest;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;

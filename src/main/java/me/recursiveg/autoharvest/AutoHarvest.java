@@ -1,4 +1,4 @@
-package org.devinprogress.autoharvest;
+package me.recursiveg.autoharvest;
 
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.resources.I18n;
@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@Mod(modid = "autoharvest", name = "Auto Harvest", version = "0.2")
+@Mod(modid = "autoharvest", name = "Auto Harvest")
 @SideOnly(Side.CLIENT)
 public class AutoHarvest {
     public enum HarvestMode {
@@ -86,7 +86,6 @@ public class AutoHarvest {
             p.connection.sendPacket(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a.get(srcIdx), (short) 0));
             p.connection.sendPacket(new CPacketClickWindow(0, dstIdx < 9 ? dstIdx + 36 : dstIdx, 0, ClickType.PICKUP, a.get(dstIdx), (short) 1));
             p.connection.sendPacket(new CPacketClickWindow(0, srcIdx < 9 ? srcIdx + 36 : srcIdx, 0, ClickType.PICKUP, a.get(srcIdx), (short) 2));
-//            return;
             ItemStack tmp = a.get(srcIdx);
             a.set(srcIdx, a.get(dstIdx));
             a.set(dstIdx, tmp);

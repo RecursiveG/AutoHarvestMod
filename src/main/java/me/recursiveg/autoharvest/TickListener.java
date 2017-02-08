@@ -1,4 +1,4 @@
-package org.devinprogress.autoharvest;
+package me.recursiveg.autoharvest;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -28,8 +28,6 @@ public class TickListener {
     private final int range;
     private final EntityPlayerSP p;
 
-    private int actionCounter = 0;
-
     public TickListener(AutoHarvest.HarvestMode mode, int range, EntityPlayerSP player) {
         this.mode = mode;
         this.range = range;
@@ -39,7 +37,6 @@ public class TickListener {
     @SubscribeEvent
     public void onTick(TickEvent.PlayerTickEvent e) {
         try {
-            actionCounter = 0;
             if (e.side != Side.CLIENT || e.player != p) return;
             switch (mode) {
                 // case SMART: smartTick();break;
@@ -56,8 +53,6 @@ public class TickListener {
                     feedTick();
                     break;
             }
-//            if (actionCounter != 0)
-//            System.out.printf("Actions: %d\n", actionCounter);
         } catch (Exception ex) {
             AutoHarvest.msg("notify.tick_error");
             AutoHarvest.msg("notify.switch_to.off");
@@ -278,7 +273,6 @@ public class TickListener {
                 if (e.getGrowingAge() >= 0 && !e.isInLove()) {
                     EnumActionResult result = FMLClientHandler.instance().getClient().playerController
                             .interactWithEntity(p, e, EnumHand.MAIN_HAND);
-                    actionCounter += 1;
                     if (result == EnumActionResult.SUCCESS) {
                         lastUsedItem = handItem;
                         minusOneInHand();

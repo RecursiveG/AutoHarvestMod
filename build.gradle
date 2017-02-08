@@ -17,8 +17,8 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-version = "2.1"
-group= "org.devinprogress.autoharvest"
+version = "2.2"
+group= "me.recursiveg.autoharvest"
 archivesBaseName = "AutoHarvest-mc1.11.2-forge2227"
 
 minecraft {

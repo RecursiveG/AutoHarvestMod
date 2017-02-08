@@ -1,4 +1,4 @@
-### Automatic Harvest Mod for Minecraft
+### Automatic Harvest Mod for Minecraft 1.11.2
 This mod give you the easiest way to harvest crops.
 You just need to walk around, and all the mature crops will be harvested and re-planted.
 
@@ -20,7 +20,7 @@ Supported Crops:
 - Pumpkin (Plant Only)
 - Melon (Plant Only)
 - Sapling
-- Mushroom
+- Mushroom (Small ones Only)
 - All kind of grass
 - All kind of flowers
 
