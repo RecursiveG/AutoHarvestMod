@@ -102,7 +102,7 @@ public class TickListener {
         ItemStack st = p.getHeldItem(EnumHand.MAIN_HAND);
         if (st != null) {
             if (st.getCount() <= 1) {
-                p.setHeldItem(EnumHand.MAIN_HAND, null);
+                p.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY);
             } else {
                 st.setCount(st.getCount() - 1);
             }
