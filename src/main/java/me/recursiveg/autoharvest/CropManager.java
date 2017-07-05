@@ -74,6 +74,8 @@ public class CropManager {
         FEED_MAP.put(Items.FISH, EntityOcelot.class);
         FEED_MAP.put(Item.getItemById(37), EntityRabbit.class); // Dandelion
         FEED_MAP.put(Items.CARROT, EntityRabbit.class);
+
+        FEED_MAP.put(Items.WHEAT_SEEDS, EntityParrot.class);
     }
 
     public static boolean isWeedBlock(World w, BlockPos pos) {
