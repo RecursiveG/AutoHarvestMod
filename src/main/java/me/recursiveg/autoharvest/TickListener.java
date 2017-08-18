@@ -1,5 +1,6 @@
 package me.recursiveg.autoharvest;
 
+import com.google.common.cache.Cache;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -12,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -113,17 +115,18 @@ public class TickListener {
 
     private ItemStack tryFillItemInHand() {
         ItemStack itemStack = p.getHeldItem(EnumHand.MAIN_HAND);
-        if (itemStack == null) {
+        if (itemStack.isEmpty()) {
             int supplmentIdx = -1;
             ItemStack stack = null;
-            if (lastUsedItem != null) {
-                ItemStack[] inv = (ItemStack[]) p.inventory.mainInventory.toArray();
+            if (lastUsedItem != null && !lastUsedItem.isEmpty()) {
+                NonNullList<ItemStack> inv = p.inventory.mainInventory;
                 for (int idx = 0; idx < 36; ++idx) {
-                    if (inv[idx] != null && inv[idx].getItem() == lastUsedItem.getItem() &&
-                            inv[idx].getItemDamage() == lastUsedItem.getItemDamage() &&
-                            inv[idx].hasTagCompound() == false) {
+                    ItemStack s = inv.get(idx);
+                    if (s.getItem() == lastUsedItem.getItem() &&
+                            s.getItemDamage() == lastUsedItem.getItemDamage() &&
+                            s.hasTagCompound() == false) {
                         supplmentIdx = idx;
-                        stack = inv[idx];
+                        stack = s;
                         break;
                     }
                 }
@@ -165,13 +168,13 @@ public class TickListener {
                 if (w.getBlockState(pos).getBlock() != Blocks.AIR) continue;
                 if (CropManager.canPlantOn(handItem.getItem(), w, pos)) {
                     BlockPos downPos = pos.down();
+                    lastUsedItem = handItem.copy();
                     FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                             p,
                             FMLClientHandler.instance().getWorldClient(),
                             downPos, EnumFacing.UP,
                             new Vec3d(X + deltaX + 0.5, Y, Z + deltaZ + 0.5),
                             EnumHand.MAIN_HAND);
-                    lastUsedItem = handItem;
                     minusOneInHand();
                     return;
                 }
@@ -196,13 +199,13 @@ public class TickListener {
                         EnumFacing tmpFace = EnumFacing.EAST;
                         tmpPos = pos.add(tmpFace.getDirectionVec());
                         if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            lastUsedItem = handItem.copy();
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
                                     pos, tmpFace,
                                     new Vec3d(X + deltaX + 1, Y + deltaY + 0.5, Z + deltaZ + 0.5),
                                     EnumHand.MAIN_HAND);
-                            lastUsedItem = handItem;
                             minusOneInHand();
                             return;
                         }
@@ -210,13 +213,13 @@ public class TickListener {
                         tmpFace = EnumFacing.WEST;
                         tmpPos = pos.add(tmpFace.getDirectionVec());
                         if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            lastUsedItem = handItem.copy();
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
                                     pos, tmpFace,
                                     new Vec3d(X + deltaX, Y + deltaY + 0.5, Z + deltaZ + 0.5),
                                     EnumHand.MAIN_HAND);
-                            lastUsedItem = handItem;
                             minusOneInHand();
                             return;
                         }
@@ -224,13 +227,13 @@ public class TickListener {
                         tmpFace = EnumFacing.SOUTH;
                         tmpPos = pos.add(tmpFace.getDirectionVec());
                         if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            lastUsedItem = handItem.copy();
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
                                     pos, tmpFace,
                                     new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ + 1),
                                     EnumHand.MAIN_HAND);
-                            lastUsedItem = handItem;
                             minusOneInHand();
                             return;
                         }
@@ -238,13 +241,13 @@ public class TickListener {
                         tmpFace = EnumFacing.NORTH;
                         tmpPos = pos.add(tmpFace.getDirectionVec());
                         if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
+                            lastUsedItem = handItem.copy();
                             FMLClientHandler.instance().getClient().playerController.processRightClickBlock(
                                     p,
                                     FMLClientHandler.instance().getWorldClient(),
                                     pos, tmpFace,
                                     new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ),
                                     EnumHand.MAIN_HAND);
-                            lastUsedItem = handItem;
                             minusOneInHand();
                             return;
                         }
@@ -271,22 +274,18 @@ public class TickListener {
         for (Class<? extends EntityAnimal> type : animalList) {
             for (EntityAnimal e : p.getEntityWorld().getEntitiesWithinAABB(type, box)) {
                 if (e.getGrowingAge() >= 0 && !e.isInLove()) {
+                    lastUsedItem = handItem.copy();
                     EnumActionResult result = FMLClientHandler.instance().getClient().playerController
                             .interactWithEntity(p, e, EnumHand.MAIN_HAND);
-                    if (result == EnumActionResult.SUCCESS) {
-                        lastUsedItem = handItem;
-                        minusOneInHand();
-                        return;
-                    }
                 }
             }
         }
         if (handItem.getItem() == Items.SHEARS) {
             for (EntitySheep e : p.getEntityWorld().getEntitiesWithinAABB(EntitySheep.class, box)) {
                 if (!e.isChild() && !e.getSheared()) {
+                    lastUsedItem = handItem.copy();
                     FMLClientHandler.instance().getClient().playerController
                             .interactWithEntity(p, e, EnumHand.MAIN_HAND);
-                    lastUsedItem = handItem;
                     return;
                 }
             }
