@@ -1,0 +1,17 @@
+{
+    "key.toggle_autoharvest": "Switch AutoHarvest Mode",
+
+    "mode.harvest.name": "Harvest",
+    "mode.plant.name": "Plant",
+    "mode.mow.name": "Mow",
+    "mode.feed.name": "Feed",
+    "mode.shear.name": "Shear",
+    "mode.off.name": "OFF",
+
+    "notify.prefix": "[AutoHarvest]",
+    "notify.current_mode": "Current mode:",
+
+    "warn.lack_of_seed": "You need more seeds",
+    "warn.tick_error": "Internal error occurs. Check console for more info."
+}
+

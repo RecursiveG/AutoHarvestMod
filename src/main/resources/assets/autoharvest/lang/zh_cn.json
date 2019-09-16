@@ -1,0 +1,17 @@
+{
+    "key.toggle_autoharvest": "切换自动收割模式",
+
+    "mode.harvest.name": "收割",
+    "mode.plant.name": "种植",
+    "mode.mow.name": "除草",
+    "mode.feed.name": "喂食",
+    "mode.shear.name": "剪毛",
+    "mode.off.name": "关",
+
+    "notify.prefix": "[自动收割]",
+    "notify.current_mode": "当前模式:",
+
+    "warn.lack_of_seed": "缺少种子",
+    "warn.tick_error": "发生内部错误"
+}
+

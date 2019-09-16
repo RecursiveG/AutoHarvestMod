@@ -1,3 +1,5 @@
 *.iml
 build/
 .gradle
+.idea
+run
