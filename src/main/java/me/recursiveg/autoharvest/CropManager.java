@@ -1,10 +1,9 @@
 package me.recursiveg.autoharvest;
 
-import com.google.common.collect.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CropsBlock;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import net.minecraft.block.*;
 import net.minecraft.entity.passive.*;
 import net.minecraft.entity.passive.horse.DonkeyEntity;
 import net.minecraft.entity.passive.horse.HorseEntity;
@@ -139,7 +138,7 @@ public class CropManager {
         if (b instanceof CropsBlock) {
             return ((CropsBlock) b).isMaxAge(stat);
         } else if (b == NETHER_WART) {
-            return b.getHarvestLevel(stat) >= 3;
+            return stat.has(NetherWartBlock.AGE) && stat.get(NetherWartBlock.AGE) >= 3;
         } else if (b == REED_BLOCK) {
             Block blockDown = w.getBlockState(pos.down()).getBlock();
             Block blockDown2 = w.getBlockState(pos.down(2)).getBlock();
@@ -167,7 +166,7 @@ public class CropManager {
     /**
      * Check if a new crop can be placed in this location
      * by placing on top of the supporting block
-     *
+     * <p>
      * Used by PLANT mode, NORMAL type
      *
      * @param cropType

@@ -103,7 +103,7 @@ public class TickListener {
                         Minecraft.getInstance().playerController.onPlayerDamageBlock(pos, Direction.UP);
                         return;
                     }
-                    
+
                 }
             }
         }
@@ -155,10 +155,13 @@ public class TickListener {
                         lastUsedItem = handItem.copy();
                         BlockRayTraceResult clickPoint = new BlockRayTraceResult(new Vec3d(X + deltaX + 0.5, Y + deltaY, Z + deltaZ + 0.5), Direction.UP, downPos, false);
 
-                        Minecraft.getInstance().playerController.func_217292_a(
+                        ActionResultType result = Minecraft.getInstance().playerController.func_217292_a(
                                 p,
                                 Minecraft.getInstance().world,
                                 Hand.MAIN_HAND, clickPoint);
+                        if (result != ActionResultType.SUCCESS) {
+                            continue;
+                        }
                         setHandItemCount(afterPlantItemCount);
                         return;
                     }
@@ -166,6 +169,48 @@ public class TickListener {
                 }
             }
         }
+    }
+
+    /**
+     * facing accepts only NEWS
+     * return:
+     * true =place success
+     * false=place not success
+     */
+    private boolean tryPlaceCocoaOnLog(World w, BlockPos logPos, Direction facing, ItemStack handItem) {
+        if (w.getBlockState(logPos.offset(facing)).getBlock() != Blocks.AIR) return false;
+
+        lastUsedItem = handItem.copy();
+        int afterUseItemCount = handItem.getCount() - 1;
+        Vec3d hitVec;
+        switch (facing) {
+            case EAST:
+                hitVec = new Vec3d(logPos.getX() + 1, logPos.getY() + 0.5, logPos.getZ() + 0.5);
+                break;
+            case WEST:
+                hitVec = new Vec3d(logPos.getX(), logPos.getY() + 0.5, logPos.getZ() + 0.5);
+                break;
+            case SOUTH:
+                hitVec = new Vec3d(logPos.getX() + 0.5, logPos.getY() + 0.5, logPos.getZ() + 1);
+                break;
+            case NORTH:
+                hitVec = new Vec3d(logPos.getX() + 0.5, logPos.getY() + 0.5, logPos.getZ());
+                break;
+            default:
+                return false;
+        }
+        BlockRayTraceResult clickPoint = new BlockRayTraceResult(hitVec, facing, logPos, false);
+        ActionResultType result = Minecraft.getInstance().playerController.func_217292_a(
+                p,
+                Minecraft.getInstance().world,
+                Hand.MAIN_HAND, clickPoint);
+        if (result == ActionResultType.SUCCESS) {
+            setHandItemCount(afterUseItemCount);
+            return true;
+        } else {
+            return false;
+        }
+
     }
 
     private void plantCocoaTick(ItemStack handItem) {
@@ -181,65 +226,10 @@ public class TickListener {
                     if (!canReachBlock(p, pos)) continue;
                     BlockState jungleBlock = w.getBlockState(pos);
                     if (jungleBlock.getBlock() == Blocks.JUNGLE_LOG) {
-                        BlockPos tmpPos;
-
-                        Direction tmpFace = Direction.EAST;
-                        tmpPos = pos.add(tmpFace.getDirectionVec());
-                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
-                            lastUsedItem = handItem.copy();
-                            int afterUseItemCount = handItem.getCount() - 1;
-                            BlockRayTraceResult clickPoint = new BlockRayTraceResult(new Vec3d(X + deltaX + 1, Y + deltaY + 0.5, Z + deltaZ + 0.5), tmpFace, pos, false);
-                            Minecraft.getInstance().playerController.func_217292_a(
-                                    p,
-                                    Minecraft.getInstance().world,
-                                    Hand.MAIN_HAND, clickPoint);
-                            setHandItemCount(afterUseItemCount);
-                            return;
-                        }
-
-                        tmpFace = Direction.WEST;
-                        tmpPos = pos.add(tmpFace.getDirectionVec());
-                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
-                            lastUsedItem = handItem.copy();
-                            int afterUseItemCount = handItem.getCount() - 1;
-                            BlockRayTraceResult clickPoint = new BlockRayTraceResult(new Vec3d(X + deltaX, Y + deltaY + 0.5, Z + deltaZ + 0.5), tmpFace, pos, false);
-                            Minecraft.getInstance().playerController.func_217292_a(
-                                    p,
-                                    Minecraft.getInstance().world,
-                                    Hand.MAIN_HAND, clickPoint);
-                            setHandItemCount(afterUseItemCount);
-                            return;
-                        }
-
-                        tmpFace = Direction.SOUTH;
-                        tmpPos = pos.add(tmpFace.getDirectionVec());
-                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
-                            lastUsedItem = handItem.copy();
-                            int afterUseItemCount = handItem.getCount() - 1;
-
-                            BlockRayTraceResult clickPoint = new BlockRayTraceResult(new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ + 1), tmpFace, pos, false);
-                            Minecraft.getInstance().playerController.func_217292_a(
-                                    p,
-                                    Minecraft.getInstance().world,
-                                    Hand.MAIN_HAND, clickPoint);
-                            setHandItemCount(afterUseItemCount);
-                            return;
-                        }
-
-                        tmpFace = Direction.NORTH;
-                        tmpPos = pos.add(tmpFace.getDirectionVec());
-                        if (w.getBlockState(tmpPos).getBlock() == Blocks.AIR) {
-                            lastUsedItem = handItem.copy();
-                            int afterUseItemCount = handItem.getCount() - 1;
-
-                            BlockRayTraceResult clickPoint = new BlockRayTraceResult(new Vec3d(X + deltaX + 0.5, Y + deltaY + 0.5, Z + deltaZ), tmpFace, pos, false);
-                            Minecraft.getInstance().playerController.func_217292_a(
-                                    p,
-                                    Minecraft.getInstance().world,
-                                    Hand.MAIN_HAND, clickPoint);
-                            setHandItemCount(afterUseItemCount);
-                            return;
-                        }
+                        if (tryPlaceCocoaOnLog(w, pos, Direction.EAST, handItem)) return;
+                        if (tryPlaceCocoaOnLog(w, pos, Direction.WEST, handItem)) return;
+                        if (tryPlaceCocoaOnLog(w, pos, Direction.SOUTH, handItem)) return;
+                        if (tryPlaceCocoaOnLog(w, pos, Direction.NORTH, handItem)) return;
                     }
                 }
             }
